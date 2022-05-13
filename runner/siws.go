@@ -94,6 +94,7 @@ func InitMessage(domain, address, uri, version string, options map[string]interf
 		}
 	}
 	return &message.Message{
+		Header: message.Header{T: "SIP99"},
 		Payload: message.Payload{
 			Domain:  domain,
 			Address: address,
@@ -147,6 +148,7 @@ func ParseMessage(message string) (*message.Message, error) {
 		result["version"].(string),
 		result,
 	)
+
 
 	if err != nil {
 		return nil, err

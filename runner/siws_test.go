@@ -3,6 +3,7 @@ package runner
 import (
 	"crypto/ed25519"
 	"fmt"
+	siwsMessage "github.com/Web3Auth/siws-go/pkg/message"
 	"github.com/Web3Auth/siws-go/pkg/types"
 	utils "github.com/Web3Auth/siws-go/pkg/utils"
 	solTypes "github.com/portto/solana-go-sdk/types"
@@ -50,41 +51,45 @@ var testMessage, _ = InitMessage(
 	options,
 )
 
-/*func compareMessage(t *testing.T, a, b *siwsMessage.Message) {
-	assert.Equal(t, a.Domain, b.Domain, "expected %s, found %s", a.Domain, b.Domain)
-	assert.Equal(t, a.Address, b.Address, "expected %s, found %s", a.Address, b.Address)
-	assert.Equal(t, a.Uri.String(), b.Uri.String(), "expected %s, found %s", a.Uri, b.Uri)
-	assert.Equal(t, a.Version, b.Version, "expected %s, found %s", a.Version, b.Version)
+func compareMessage(t *testing.T, a, b *siwsMessage.Message) {
 
-	assert.Equal(t, a.Statement, b.Statement, "expected %s, found %s", a.Statement, b.Statement)
-	assert.Equal(t, a.Nonce, b.Nonce, "expected %s, found %s", a.Nonce, b.Nonce)
-	assert.Equal(t, a.ChainID, b.ChainID, "expected %s, found %s", a.ChainID, b.ChainID)
+	assert.Equal(t, a.Payload.Domain, b.Payload.Domain, "expected %s, found %s", a.Payload.Domain, b.Payload.Domain)
+	assert.Equal(t, a.Payload.Address, b.Payload.Address, "expected %s, found %s", a.Payload.Address, b.Payload.Address)
+	assert.Equal(t, a.Payload.Uri.String(), b.Payload.Uri.String(), "expected %s, found %s", a.Payload.Uri, b.Payload.Uri)
+	assert.Equal(t, a.Payload.Version, b.Payload.Version, "expected %s, found %s", a.Payload.Version, b.Payload.Version)
 
-	assert.Equal(t, a.IssuedAt, b.IssuedAt, "expected %s, found %s", a.IssuedAt, b.IssuedAt)
-	assert.Equal(t, a.ExpirationTime, b.ExpirationTime, "expected %s, found %s", a.ExpirationTime, b.ExpirationTime)
-	assert.Equal(t, a.NotBefore, b.NotBefore, "expected %s, found %s", a.NotBefore, b.NotBefore)
+	assert.Equal(t, a.Payload.Statement, b.Payload.Statement, "expected %s, found %s", a.Payload.Statement, b.Payload.Statement)
+	assert.Equal(t, a.Payload.Nonce, b.Payload.Nonce, "expected %s, found %s", a.Payload.Nonce, b.Payload.Nonce)
+	assert.Equal(t, a.Payload.ChainID, b.Payload.ChainID, "expected %s, found %s", a.Payload.ChainID, b.Payload.ChainID)
 
-	assert.Equal(t, a.RequestID, b.RequestID, "expected %s, found %s", a.RequestID, b.RequestID)
-	assert.Equal(t, a.Resources, b.Resources, "expected %v, found %v", a.Resources, b.Resources)
+	assert.Equal(t, a.Payload.IssuedAt, b.Payload.IssuedAt, "expected %s, found %s", a.Payload.IssuedAt, b.Payload.IssuedAt)
+	assert.Equal(t, a.Payload.ExpirationTime, b.Payload.ExpirationTime, "expected %s, found %s", a.Payload.ExpirationTime, b.Payload.ExpirationTime)
+	assert.Equal(t, a.Payload.NotBefore, b.Payload.NotBefore, "expected %s, found %s", a.Payload.NotBefore, b.Payload.NotBefore)
+
+	assert.Equal(t, a.Payload.RequestID, b.Payload.RequestID, "expected %s, found %s", a.Payload.RequestID, b.Payload.RequestID)
+	assert.Equal(t, a.Payload.Resources, b.Payload.Resources, "expected %v, found %v", a.Payload.Resources, b.Payload.Resources)
 }
+
+
 
 func TestCreate(t *testing.T) {
-	assert.Equal(t, testMessage.Domain, domain, "domain should be %s", domain)
-	assert.Equal(t, testMessage.Address, address, "address should be %s", address)
-	assert.Equal(t, testMessage.Uri.String(), uri, "uri should be %s", uri)
-	assert.Equal(t, testMessage.Version, version, "version should be %s", version)
+	assert.Equal(t, testMessage.Payload.Domain, domain, "domain should be %s", domain)
+	assert.Equal(t, testMessage.Payload.Address, addressStr, "address should be %s", addressStr)
+	assert.Equal(t, testMessage.Payload.Uri.String(), uri, "uri should be %s", uri)
+	assert.Equal(t, testMessage.Payload.Version, version, "version should be %s", version)
 
-	assert.Equal(t, *testMessage.Statement, statement, "statement should be %s", statement)
-	assert.Equal(t, testMessage.Nonce, nonce, "nonce should be %s", nonce)
-	assert.Equal(t, testMessage.ChainID, chainId, "chainId should be %s", chainId)
+	assert.Equal(t, *testMessage.Payload.Statement, statement, "statement should be %s", statement)
+	assert.Equal(t, testMessage.Payload.Nonce, nonce, "nonce should be %s", nonce)
+	assert.Equal(t, testMessage.Payload.ChainID, chainId, "chainId should be %s", chainId)
 
-	assert.Equal(t, testMessage.IssuedAt, issuedAt, "issuedAt should be %v", issuedAt)
-	assert.Equal(t, *testMessage.ExpirationTime, expirationTime, "expirationTime should be %s", expirationTime)
-	assert.Equal(t, *testMessage.NotBefore, notBefore, "notBefore should be %s", notBefore)
+	assert.Equal(t, testMessage.Payload.IssuedAt, issuedAt, "issuedAt should be %v", issuedAt)
+	assert.Equal(t, *testMessage.Payload.ExpirationTime, expirationTime, "expirationTime should be %s", expirationTime)
+	assert.Equal(t, *testMessage.Payload.NotBefore, notBefore, "notBefore should be %s", notBefore)
 
-	assert.Equal(t, *testMessage.RequestID, requestId, "requestId should be %s", requestId)
-	assert.Equal(t, testMessage.Resources, resources, "resources should be %v", resources)
+	assert.Equal(t, *testMessage.Payload.RequestID, requestId, "requestId should be %s", requestId)
+	assert.Equal(t, testMessage.Payload.Resources, resources, "resources should be %v", resources)
 }
+
 
 func TestCreateRequired(t *testing.T) {
 	message, err := InitMessage(domain, addressStr, uri, version, map[string]interface{}{
@@ -92,31 +97,31 @@ func TestCreateRequired(t *testing.T) {
 	})
 	assert.Nil(t, err)
 
-	assert.Equal(t, message.Domain, domain, "domain should be %s", domain)
-	assert.Equal(t, message.Address, address, "address should be %s", address)
-	assert.Equal(t, message.Uri.String(), uri, "uri should be %s", uri)
-	assert.Equal(t, message.Version, version, "version should be %s", version)
+	assert.Equal(t, message.Payload.Domain, domain, "domain should be %s", domain)
+	assert.Equal(t, message.Payload.Address, addressStr, "address should be %s", addressStr)
+	assert.Equal(t, message.Payload.Uri.String(), uri, "uri should be %s", uri)
+	assert.Equal(t, message.Payload.Version, version, "version should be %s", version)
 
-	assert.Nil(t, message.Statement, "statement should be nil")
-	assert.NotNil(t, message.Nonce, "nonce should be not nil")
-	assert.NotNil(t, message.ChainID, "chainId should not be nil")
+	assert.Nil(t, message.Payload.Statement, "statement should be nil")
+	assert.NotNil(t, message.Payload.Nonce, "nonce should be not nil")
+	assert.NotNil(t, message.Payload.ChainID, "chainId should not be nil")
 
-	assert.NotNil(t, message.IssuedAt, "issuedAt should not be nil")
-	assert.Nil(t, message.ExpirationTime, "expirationTime should be nil")
-	assert.Nil(t, message.NotBefore, "notBefore should be nil")
+	assert.NotNil(t, message.Payload.IssuedAt, "issuedAt should not be nil")
+	assert.Nil(t, message.Payload.ExpirationTime, "expirationTime should be nil")
+	assert.Nil(t, message.Payload.NotBefore, "notBefore should be nil")
 
-	assert.Nil(t, message.RequestID, "requestId should be nil")
-	assert.Len(t, message.Resources, 0, "resources should be empty")
+	assert.Nil(t, message.Payload.RequestID, "requestId should be nil")
+	assert.Len(t, message.Payload.Resources, 0, "resources should be empty")
 }
+
 
 func TestPrepareParse(t *testing.T) {
 	prepare := testMessage.String()
 	parse, err := ParseMessage(prepare)
-
 	assert.Nil(t, err)
-
 	compareMessage(t, testMessage, parse)
 }
+
 
 func TestPrepareParseRequired(t *testing.T) {
 	message, err := InitMessage(domain, addressStr, uri, version, map[string]interface{}{
@@ -130,13 +135,13 @@ func TestPrepareParseRequired(t *testing.T) {
 	assert.Nil(t, err)
 
 	compareMessage(t, message, parse)
-}*/
+}
 
 func TestValidateEmpty(t *testing.T) {
 	_, err := testMessage.Verify("", nil, nil)
 
 	if assert.Error(t, err) {
-		assert.Equal(t, &types.InvalidSignature{"Signature cannot be empty"}, err)
+		assert.Equal(t, &types.InvalidSignature{"Message signature invalid"}, err)
 	}
 }
 
@@ -164,46 +169,43 @@ func TestValidateNotBefore(t *testing.T) {
 	assert.Equal(t, true,resp)
 }
 
-/*
-func TestValidateExpirationTime(t *testing.T) {
-	privateKey, address := createWallet(t)
 
-	message, err := InitMessage(domain, address, uri, version, map[string]interface{}{
-		"nonce":          utils.GenerateNonce(),
-		"expirationTime": time.Now().UTC().Add(-24 * time.Hour).Format(time.RFC3339),
+func TestValidateExpirationTime(t *testing.T) {
+	account := createWallet(t)
+	nonce := utils.GenerateNonce()
+	timestamp := time.Now().UTC().Add(-24 * time.Hour).Format(time.RFC3339)
+	message, err := InitMessage(domain, account.PublicKey.ToBase58(), uri, version, map[string]interface{}{
+		"nonce":       nonce,
+		"expirationTime": timestamp,
 	})
 	assert.Nil(t, err)
-	prepare := message.String()
+	preparedMessage := message.String()
 
-	hash := crypto.Keccak256Hash([]byte(prepare))
-	signature, err := crypto.Sign(hash.Bytes(), privateKey)
-
-	assert.Nil(t, err)
-
-	_, err = message.Verify(hexutil.Encode(signature), nil, nil)
+	_, err = message.Verify(string(account.Sign([]byte(preparedMessage))), &nonce, nil)
 
 	if assert.Error(t, err) {
 		assert.Equal(t, &types.ExpiredMessage{"Message expired"}, err)
 	}
 }
 
+
 func TestValidate(t *testing.T) {
-	privateKey, address := createWallet(t)
+	account := createWallet(t)
 
-	message, err := InitMessage(domain, address, uri, version, options)
+	message, err := InitMessage(domain, account.PublicKey.ToBase58(), uri, version, options)
+	assert.Nil(t, err)
+	prepare:= message.PrepareMessage()
+
+	signature := account.Sign([]byte(prepare))
+
 	assert.Nil(t, err)
 
-	hash := message.Eip191Hash()
-	signature, err := crypto.Sign(hash.Bytes(), privateKey)
-	signature[64] += 27
-
-	assert.Nil(t, err)
-
-	_, err = message.Verify(hexutil.Encode(signature), nil, nil)
+	_, err = message.Verify(string(signature), nil, nil)
 
 	assert.Nil(t, err)
 }
 
+/*
 func TestValidateTampered(t *testing.T) {
 	privateKey, address := createWallet(t)
 	_, otherAddress := createWallet(t)
