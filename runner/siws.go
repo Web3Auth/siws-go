@@ -26,7 +26,7 @@ func InitMessage(domain, address, uri, version string, options map[string]interf
 	if val, ok := utils.IsStringAndNotEmpty(options, "nonce"); ok {
 		nonce = *val
 	} else {
-		return nil, &types.InvalidMessage{"Missing or empty `nonce` property"}
+		nonce = utils.GenerateNonce()
 	}
 
 	var chainId int

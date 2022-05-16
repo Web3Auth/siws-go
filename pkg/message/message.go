@@ -4,13 +4,13 @@ import (
 	"crypto/ed25519"
 	"fmt"
 	"github.com/Web3Auth/siws-go/pkg/types"
+	"github.com/mr-tron/base58"
 	"net/url"
 	"strings"
 	"time"
 
-	"github.com/relvacode/iso8601"
-
 	utils "github.com/Web3Auth/siws-go/pkg/utils"
+	"github.com/relvacode/iso8601"
 )
 
 func (m *Message) GetDomain() string {
@@ -49,9 +49,12 @@ func (m *Message) GetIssuedAt() string {
 	return m.Payload.IssuedAt
 }
 
-func (m *Message) getExpirationTime() *time.Time {
+func (m *Message) getExpirationTime() (*time.Time) {
 	if !utils.IsEmpty(m.Payload.ExpirationTime) {
-		ret, _ := iso8601.ParseString(*m.Payload.ExpirationTime)
+		ret, err := iso8601.ParseString(*m.Payload.ExpirationTime)
+		if err != nil {
+			return nil
+		}
 		return &ret
 	}
 	return nil
@@ -165,7 +168,9 @@ func (m *Message) ValidAt(when time.Time) (bool, error) {
 }
 
 func (m *Message) Verify(signature string, nonce *string, timestamp *time.Time) (bool, error) {
+
 	var err error
+
 
 	if timestamp != nil {
 		_, err = m.ValidAt(*timestamp)
@@ -182,6 +187,7 @@ func (m *Message) Verify(signature string, nonce *string, timestamp *time.Time) 
 			return false, &types.InvalidSignature{"Message nonce doesn't match"}
 		}
 	}
+
 	resp := m.VerifySIP99(signature)
 	if resp  {
 		return true,nil
@@ -194,7 +200,13 @@ func (m *Message) VerifySIP99(signature string) (bool) {
 		return false
 	}
 
-	return ed25519.Verify(ed25519.PublicKey(m.Payload.Address),[]byte(m.String()), []byte(signature))
+	pk, err := base58.Decode(m.GetAddress())
+	if err != nil {
+		return false
+	}
+	sign,_ := base58.Decode(signature)
+
+	return ed25519.Verify(pk,[]byte(m.PrepareMessage()), sign)
 }
 
 func (m *Message) String() string {

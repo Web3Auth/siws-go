@@ -2,12 +2,17 @@ package runner
 
 import (
 	"crypto/ed25519"
+	"encoding/json"
 	"fmt"
 	siwsMessage "github.com/Web3Auth/siws-go/pkg/message"
 	"github.com/Web3Auth/siws-go/pkg/types"
 	utils "github.com/Web3Auth/siws-go/pkg/utils"
+	"github.com/mr-tron/base58"
 	solTypes "github.com/portto/solana-go-sdk/types"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -180,8 +185,7 @@ func TestValidateExpirationTime(t *testing.T) {
 	})
 	assert.Nil(t, err)
 	preparedMessage := message.String()
-
-	_, err = message.Verify(string(account.Sign([]byte(preparedMessage))), &nonce, nil)
+	_, err = message.Verify(string(account.Sign([]byte(preparedMessage))), nil, nil)
 
 	if assert.Error(t, err) {
 		assert.Equal(t, &types.ExpiredMessage{"Message expired"}, err)
@@ -191,42 +195,39 @@ func TestValidateExpirationTime(t *testing.T) {
 
 func TestValidate(t *testing.T) {
 	account := createWallet(t)
-
 	message, err := InitMessage(domain, account.PublicKey.ToBase58(), uri, version, options)
 	assert.Nil(t, err)
 	prepare:= message.PrepareMessage()
 
 	signature := account.Sign([]byte(prepare))
+	assert.Nil(t, err)
 
+	_, err = message.Verify(base58.Encode(signature), nil, nil)
+
+	assert.Nil(t, err)
+}
+
+
+func TestValidateTampered(t *testing.T) {
+	account1 := createWallet(t)
+	account2 := createWallet(t)
+
+	message, err := InitMessage(domain, account1.PublicKey.ToBase58(), uri, version, options)
+	assert.Nil(t, err)
+
+	prepare := message.PrepareMessage()
+	signature := account1.Sign([]byte(prepare))
+	assert.NotNil(t, signature)
+
+	message, err = InitMessage(domain, account2.PublicKey.ToBase58(), uri, version, options)
 	assert.Nil(t, err)
 
 	_, err = message.Verify(string(signature), nil, nil)
-
-	assert.Nil(t, err)
-}
-
-/*
-func TestValidateTampered(t *testing.T) {
-	privateKey, address := createWallet(t)
-	_, otherAddress := createWallet(t)
-
-	message, err := InitMessage(domain, address, uri, version, options)
-	assert.Nil(t, err)
-
-	hash := message.Eip191Hash()
-	signature, err := crypto.Sign(hash.Bytes(), privateKey)
-	signature[64] += 27
-
-	assert.Nil(t, err)
-
-	message, err = InitMessage(domain, otherAddress, uri, version, options)
-	assert.Nil(t, err)
-	_, err = message.Verify(hexutil.Encode(signature), nil, nil)
-
 	if assert.Error(t, err) {
-		assert.Equal(t, &types.InvalidSignature{"Signer address must match message address"}, err)
+		assert.Equal(t, &types.InvalidSignature{"Message signature invalid"}, err)
 	}
 }
+
 
 func assertCase(t *testing.T, fields map[string]interface{}, parsed string, key string) {
 	if field, ok := fields[key]; ok {
@@ -273,17 +274,17 @@ func parsingPositive(t *testing.T, cases map[string]interface{}) {
 func validationNegative(t *testing.T, cases map[string]interface{}) {
 	for name, v := range cases {
 		data := v.(map[string]interface{})
+		payload := data["payload"].(map[string]interface{})
 		message, err := InitMessage(
-			data["domain"].(string),
-			data["address"].(string),
-			data["uri"].(string),
-			data["version"].(string),
-			data,
+			payload["domain"].(string),
+			payload["address"].(string),
+			payload["uri"].(string),
+			payload["version"].(string),
+			payload,
 		)
 		assert.Nil(t, err)
-
-		_, err = message.Verify(data["signature"].(string), nil, nil)
-
+		signature := data["signature"].(map[string]interface{})
+		_, err = message.Verify(signature["s"].(string), nil, nil)
 		assert.Error(t, err, name)
 	}
 }
@@ -297,12 +298,16 @@ func validationPositive(t *testing.T, cases map[string]interface{}) {
 			payload["address"].(string),
 			payload["uri"].(string),
 			payload["version"].(string),
-			data,
+			map[string]interface{}{
+				"statement": "Sign in with Solana to the app.",
+				"issuedAt": "2022-05-16T10:51:31.789Z",
+				"nonce": "6IFWritsEP5WPA1k9",
+			},
 		)
 		assert.Nil(t, err)
 
-		_, err = message.Verify(data["signature"].(string), nil, nil)
-
+		signature := data["signature"].(map[string]interface{})
+		_, err = message.Verify(signature["s"].(string), nil, nil)
 		assert.Nil(t, err, name)
 	}
 }
@@ -310,9 +315,9 @@ func validationPositive(t *testing.T, cases map[string]interface{}) {
 func TestGlobalTestVector(t *testing.T) {
 	files := make(map[string]*os.File, 4)
 	for test, filename := range map[string]string{
-		//"parsing-negative":    "../tests/parsing_negative.json",
-		//"parsing-positive":    "../tests/parsing_positive.json",
-		//"validation-negative": "../tests/validation_negative.json",
+		"parsing-negative":    "../tests/parsing_negative.json",
+		"parsing-positive":    "../tests/parsing_positive.json",
+		"validation-negative": "../tests/validation_negative.json",
 		"validation-positive": "../tests/validation_positive.json",
 	} {
 		filePath,err := filepath.Abs(filename)
@@ -324,7 +329,6 @@ func TestGlobalTestVector(t *testing.T) {
 
 	for test, file := range files {
 		data, _ := ioutil.ReadAll(file)
-
 		var result map[string]interface{}
 		err := json.Unmarshal([]byte(data), &result)
 		assert.Nil(t, err)
@@ -341,4 +345,3 @@ func TestGlobalTestVector(t *testing.T) {
 		}
 	}
 }
- */

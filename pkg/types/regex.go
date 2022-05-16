@@ -6,7 +6,7 @@ import (
 )
 
 const SIWS_DOMAIN = "^(?P<domain>([^?#]*)) wants you to sign in with your Solana account:\\n"
-const SIWS_ADDRESS = "(?P<address>0x[a-zA-Z0-9]{32,44})\\n\\n"
+const SIWS_ADDRESS = "(?P<address>[a-zA-Z0-9]{32,44})\\n\\n"
 const SIWS_STATEMENT = "((?P<statement>[^\\n]+)\\n)?\\n"
 const SIWS_URI = "(([^:?#]+):)?(([^?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))"
 
