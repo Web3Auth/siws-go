@@ -5,33 +5,33 @@ import (
 )
 
 type Payload struct {
-	Domain  string
-	Address string
-	Uri     url.URL
-	Version string
+	Domain  string `json:"domain"`
+	Address string `json:"address"`
+	Uri     url.URL `json:"uri"`
+	Version string `json:"version"`
 
-	Statement *string
-	Nonce     string
-	ChainID   int
+	Statement *string `json:"statement"`
+	Nonce     string `json:"nonce"`
+	ChainID   int `json:"chain_id"`
 
-	IssuedAt       string
-	ExpirationTime *string
-	NotBefore      *string
+	IssuedAt       string `json:"issued_at"`
+	ExpirationTime *string `json:"expiration_time"`
+	NotBefore      *string `json:"not_before"`
 
-	RequestID *string
-	Resources []string
+	RequestID *string `json:"request_id"`
+	Resources []string `json:"resources"`
 }
 
 type Header struct {
-	T string
+	T string `json:"t"`
 }
 
 type Signature struct {
-	T string // signature scheme
+	T string `json:"t"`
 
-	M SignatureMeta // signature related metadata (optional)
+	M SignatureMeta `json:"m"`
 
-	S string // signature
+	S string `json:"s"`
 }
 
 type SignatureMeta struct {
@@ -39,7 +39,7 @@ type SignatureMeta struct {
 }
 
 type Message struct {
-	Payload Payload
-	Header Header
-	Signature Signature
+	Payload Payload `json:"payload,omitempty"`
+	Header Header `json:"header,omitempty"`
+	Signature Signature `json:"signature,omitempty"`
 }
